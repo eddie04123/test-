@@ -1,116 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eddie Garcia | Bay Area Luxury Deals</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Lato&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Lato', sans-serif;
-      background-color: #FAF9F6;
-      color: #1A1F2B;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    header h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 2.5em;
-      color: #1A1F2B;
-    }
-    header p {
-      font-size: 1.2em;
-      color: #6C7B8B;
-    }
-    form {
-      background: #F5EFE6;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(180, 180, 180, 0.2);
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #B2B9A3;
-      border-radius: 6px;
-      background: white;
-      color: #1A1F2B;
-      font-family: 'Lato', sans-serif;
-    }
-    input[type="submit"] {
-      background-color: #D4AF37;
-      color: #1A1F2B;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
-      border: none;
-    }
-    input[type="submit"]:hover {
-      background-color: #C7A02F;
-    }
-    .disclaimer {
-      font-size: 0.9em;
-      color: #6C7B8B;
-      margin-top: 15px;
-    }
-    @media (max-width: 768px) {
-      .container {
-        padding: 20px 15px;
-      }
-      header h1 {
-        font-size: 2em;
-      }
-      header p {
-        font-size: 1em;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Eddie Garcia</h1>
-      <p>Bay Area Luxury Deals | Off-Market Homes for Verified Investors</p>
-    </header>
+function doPost(e) {
+  try {
+    const folderName = "Luxury Uploads"; // This folder will be auto-created if it doesn’t exist
+    const folder = getOrCreateFolder(folderName);
 
-    <form name="leadForm" method="POST" enctype="multipart/form-data" action="https://script.google.com/macros/s/AKfycbxh6B5Et5chwML8QlSiX5jkXKbXBDsxVAueLjPiCr6LNiPuy61hd_bXJlucsYHvXI8l/exec">
-      <label>Full Name</label>
-      <input type="text" name="name" required />
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    const timeStamp = new Date();
 
-      <label>Email Address</label>
-      <input type="email" name="email" required />
+    const name = e.parameter.name;
+    const email = e.parameter.email;
+    const phone = e.parameter.phone;
+    const focus = e.parameter.focus;
 
-      <label>Phone Number</label>
-      <input type="tel" name="phone" required />
+    let fileUrl = "No file uploaded";
 
-      <label>Investment Focus</label>
-      <select name="focus" required>
-        <option value="Single-Family">Single-Family</option>
-        <option value="Multifamily">Multifamily</option>
-        <option value="F
+    // Handle file upload
+    if (e.files && e.files.file) {
+      const blob = e.files.file;
+      const uploadedFile = folder.createFile(blob);
+      uploadedFile.setName(`${name}_POF_${timeStamp.toISOString()}`);
+      fileUrl = uploadedFile.getUrl();
+    }
 
-ix & Flip">Fix & Flip</option>
-        <option value="Buy & Hold">Buy & Hold</option>
-      </select>
+    // Save to sheet
+    sheet.appendRow([timeStamp, name, email, phone, focus, fileUrl]);
 
-      <label>Upload Proof of Funds</label>
-      <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required />
+    return ContentService.createTextOutput("Success")
+                         .setMimeType(ContentService.MimeType.TEXT);
 
-      <input type="submit" value="Apply for Access" />
+  } catch (error) {
+    return ContentService.createTextOutput("Error: " + error.message);
+  }
+}
 
-      <p class="disclaimer">
-        To maintain the integrity of our exclusive network, we only grant access to verified, qualified investors. Please upload a recent proof of funds (bank letter, statement, or verified screenshot). Your information will be handled with complete confidentiality and used solely for verification purposes. We respect your privacy and appreciate your trust.
-      </p>
-    </form>
-  </div>
-</body>
-</html>
+function getOrCreateFolder(folderName) {
+  const folders = DriveApp.getFoldersByName(folderName);
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+}
